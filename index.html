@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Team Agent</title>
+    <style>
+        body { background: #0f0f0f; color: #fff; font-family: sans-serif; display: flex; justify-content: center; padding: 40px 20px; margin: 0; }
+        .container { max-width: 700px; width: 100%; }
+        .card { background: #181818; border: 1px solid #2d2d2d; border-radius: 12px; padding: 25px; margin-bottom: 20px; }
+        h1 { color: #ff7a00; text-align: center; margin-bottom: 5px; font-size: 1.8rem; }
+        p.sub { text-align: center; color: #888; margin-bottom: 25px; font-size: 0.9rem; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 12px; background: #101010; border: 1px solid #333; border-radius: 6px; color: #fff; margin-bottom: 15px; font-size: 1rem; box-sizing: border-box; }
+        input:focus, select:focus { border-color: #ff7a00; outline: none; }
+        button { width: 100%; padding: 14px; background: #ff7a00; color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+        button:hover { background: #e06b00; }
+        button:disabled { background: #444; color: #888; cursor: not-allowed; }
+        .loader { display: none; text-align: center; color: #ff7a00; margin: 15px 0; font-weight: bold; }
+        .output-box { background: #101010; border: 1px solid #333; border-radius: 6px; padding: 15px; white-space: pre-wrap; line-height: 1.5; max-height: 400px; overflow-y: auto; margin-top: 15px; font-size: 0.95rem; color: #ddd; }
+        .results { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Content Team AI Agent</h1>
+    <p class="sub">Researcher ➔ Writer ➔ Editor Multi-Agent System</p>
+
+    <div class="card">
+        <form id="agentForm">
+            <label>Topic</label>
+            <input type="text" id="topic" placeholder="e.g., Future of AI Automation" required>
+
+            <label>Target Audience</label>
+            <input type="text" id="audience" placeholder="e.g., Developers & Tech Founders" required>
+
+            <label>Platform</label>
+            <select id="platform">
+                <option value="Blog post">Blog post</option>
+                <option value="LinkedIn post">LinkedIn post</option>
+                <option value="X (Twitter) thread">X (Twitter) thread</option>
+            </select>
+
+            <button type="submit" id="submitBtn">Generate Content</button>
+        </form>
+        <div class="loader" id="loader">⏳ Agents are working... Please wait (10-20s)</div>
+    </div>
+
+    <div class="card results" id="resultsCard">
+        <h3 style="color: #ff7a00; margin-bottom: 10px;">✨ Final Edited Content</h3>
+        <div class="output-box" id="outputDisplay"></div>
+    </div>
+</div>
+
+<script>
+    // ⚠️ اپنے n8n کا Webhook Production URL یہاں لازمی پیسٹ کریں
+    const WEBHOOK_URL = "YOUR_N8N_PRODUCTION_WEBHOOK_URL";
+
+    document.getElementById('agentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        const loader = document.getElementById('loader');
+        const resultsCard = document.getElementById('resultsCard');
+        const output = document.getElementById('outputDisplay');
+
+        const payload = {
+            Topic: document.getElementById('topic').value,
+            Audience: document.getElementById('audience').value,
+            Platform: document.getElementById('platform').value
+        };
+
+        btn.disabled = true;
+        loader.style.display = 'block';
+        resultsCard.style.display = 'none';
+
+        try {
+            const res = await fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            const result = Array.isArray(data) ? data[0] : data;
+
+            output.textContent = result.final_content || "No content returned.";
+            resultsCard.style.display = 'block';
+        } catch (err) {
+            alert("Error connecting to n8n webhook. Make sure workflow is active!");
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+            loader.style.display = 'none';
+        }
+    });
+</script>
+
+</body>
+</html>
